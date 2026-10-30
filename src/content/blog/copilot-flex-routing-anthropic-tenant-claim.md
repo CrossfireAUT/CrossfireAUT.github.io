@@ -13,7 +13,7 @@ It's a reasonable thing to believe, and parts of it are true. But as a blanket s
 
 For a defender this is more than a question about privacy: data flows you don't know about are attack surface you don't manage, and settings nobody chose are configuration drift.
 
-> This post is a **snapshot as of 30 October 2026**, checked against Microsoft Learn on that date. **I will not be updating it.** Microsoft's pages are reviewed on a 180-day cycle and defaults change, so check the linked pages and your own tenant before you rely on anything here. This is a technical reading, not legal advice.
+> This post is a **snapshot as of 30 October 2026**, checked against Microsoft Learn on that date. Microsoft's pages are reviewed on a 180-day cycle and defaults change, so check the linked pages and your own tenant before you rely on anything here. This is a technical reading, not legal advice.
 
 ## TL;DR
 
