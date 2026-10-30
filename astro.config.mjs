@@ -1,10 +1,12 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  // Public URL of the site (used for canonical URLs)
+  // Public URL of the site (used for the sitemap and canonical URLs)
   site: 'https://crossfireaut.github.io',
+  integrations: [sitemap()],
   markdown: {
     shikiConfig: {
       theme: 'github-dark-default',
