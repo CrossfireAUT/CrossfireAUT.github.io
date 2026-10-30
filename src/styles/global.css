@@ -94,6 +94,8 @@ h1, h2, h3, h4 { line-height: 1.2; letter-spacing: -0.02em; }
 .prose { max-width: var(--prose); margin-inline: auto; font-size: 1.05rem; }
 .prose h2 { margin-top: 2.5rem; font-size: 1.6rem; }
 .prose h3 { margin-top: 2rem; font-size: 1.25rem; }
+/* Keep headings clear of the sticky header when jumping from the contents box */
+.prose h2, .prose h3 { scroll-margin-top: 5rem; }
 .prose img { max-width: 100%; height: auto; border-radius: var(--radius); }
 .prose blockquote {
   margin: 1.5rem 0; padding: 0.25rem 1rem;

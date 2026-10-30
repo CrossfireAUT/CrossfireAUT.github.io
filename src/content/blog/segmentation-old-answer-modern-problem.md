@@ -1,7 +1,7 @@
 ---
 title: 'AI & Segmentation: Modern problems require old school solutions'
 description: 'AI is speeding up how fast vulnerabilities are found and exploited. Network segmentation is boring, decades old, and one of the few controls that still works on day zero.'
-pubDate: 2026-10-30
+pubDate: 2026-10-30T12:00:00Z
 cover: '../../assets/covers/segmentation-ai.svg'
 coverAlt: 'A bar chart of time to exploit shrinking from 63 days to minus 7, an AI chip sending an exploit into a network, and a firewall containing it in the DMZ while clients, servers and admin zones stay locked'
 tags: ['segmentation', 'network', 'hardening', 'blue-team']

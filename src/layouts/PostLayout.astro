@@ -1,13 +1,19 @@
 ---
 import { Image } from 'astro:assets';
+import type { MarkdownHeading } from 'astro';
 import BaseLayout from './BaseLayout.astro';
 import type { Post } from '../lib/posts';
 import { readingTime } from '../lib/posts';
 
 interface Props {
   post: Post;
+  headings?: MarkdownHeading[];
 }
-const { post } = Astro.props;
+const { post, headings = [] } = Astro.props;
+
+// Table of contents from the post's main headings; only worth showing on longer posts
+const tocItems = headings.filter((h) => h.depth === 2);
+const showToc = tocItems.length >= 3;
 const { title, description, pubDate, updatedDate, tags, severity, cve, cover, coverAlt } = post.data;
 const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
@@ -30,8 +36,34 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
         <Image src={cover} alt={coverAlt} widths={[640, 1200]} sizes="(min-width: 768px) 44rem, 100vw" loading="eager" />
       </figure>
     )}
-    <div class="prose">
-      <slot />
+    <div class="post-body">
+      {showToc && (
+        <nav class="toc" aria-label="Contents">
+          <details>
+            <summary class="mono">Contents</summary>
+            <ol>
+              {tocItems.map((h) => (
+                <li><a href={`#${h.slug}`}>{h.text}</a></li>
+              ))}
+            </ol>
+          </details>
+        </nav>
+      )}
+      <div class="prose">
+        <slot />
+      </div>
+      {showToc && (
+        <aside class="toc-rail">
+          <nav aria-label="Contents">
+            <p class="rail-label mono">Contents</p>
+            <ol>
+              {tocItems.map((h) => (
+                <li><a href={`#${h.slug}`}>{h.text}</a></li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+      )}
     </div>
     {tags.length > 0 && (
       <footer class="tags">
@@ -86,6 +118,36 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
     pre.replaceWith(wrapper);
     wrapper.append(head, pre);
   });
+
+  // Highlight the section currently being read in the side rail
+  const railLinks = [...document.querySelectorAll<HTMLAnchorElement>('.toc-rail a')];
+  const sections = railLinks
+    .map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))))
+    .filter((el): el is HTMLElement => el !== null);
+
+  if (sections.length > 0) {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      // The last heading that has scrolled past the top area counts as current
+      let current = -1;
+      sections.forEach((s, i) => {
+        if (s.getBoundingClientRect().top <= 140) current = i;
+      });
+      // At the very bottom, the last section is current even if its heading can't reach the top
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        current = sections.length - 1;
+      }
+      railLinks.forEach((a, i) => a.setAttribute('aria-current', String(i === current)));
+    };
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }, { passive: true });
+    update();
+  }
 </script>
 
 <style>
@@ -98,4 +160,55 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
   .cover { max-width: var(--prose); margin: 0 auto 2.5rem; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .cover :global(img) { display: block; width: 100%; height: auto; }
   .tags { max-width: var(--prose); margin: 3rem auto 0; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  .toc {
+    max-width: var(--prose); margin: 0 auto 2.5rem;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  }
+  .toc summary {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.85rem 1.1rem; cursor: pointer; list-style: none;
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .toc summary::-webkit-details-marker { display: none; }
+  .toc summary::after { content: '+'; font-size: 1rem; color: var(--accent); }
+  .toc details[open] summary::after { content: '−'; }
+  .toc summary:hover { color: var(--text); }
+  .toc ol { list-style: none; margin: 0; padding: 0.75rem 1.1rem 1rem; border-top: 1px solid var(--border); }
+  .toc li { padding: 0.22rem 0 0.22rem 0.75rem; line-height: 1.4; border-left: 2px solid var(--accent-soft); }
+  .toc a { color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--text); }
+
+  /* Side rail: only on screens wide enough to keep the article centred */
+  .toc-rail { display: none; }
+
+  @media (min-width: 75rem) {
+    .post-body {
+      display: grid;
+      grid-template-columns: 1fr minmax(0, var(--prose)) 1fr;
+      column-gap: 2.5rem;
+    }
+    .post-body > .toc { display: none; }
+    .post-body > .prose { grid-column: 2; grid-row: 1; margin: 0; max-width: none; }
+    .toc-rail { display: block; grid-column: 3; grid-row: 1; max-width: 15rem; }
+    .toc-rail nav {
+      position: sticky; top: 5.5rem;
+      max-height: calc(100vh - 7rem); overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .rail-label {
+      margin: 0 0 0.75rem; font-size: 0.72rem;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    }
+    .toc-rail ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--border); }
+    .toc-rail li { margin: 0; }
+    .toc-rail a {
+      display: block; margin-left: -1px; padding: 0.3rem 0 0.3rem 0.85rem;
+      border-left: 2px solid transparent;
+      font-size: 0.85rem; line-height: 1.35; color: var(--muted); text-decoration: none;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .toc-rail a:hover { color: var(--text); }
+    .toc-rail a[aria-current='true'] { color: var(--text); border-left-color: var(--accent); }
+  }
 </style>

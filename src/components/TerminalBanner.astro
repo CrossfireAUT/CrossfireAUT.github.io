@@ -1,16 +1,42 @@
 ---
-// Each command types out in turn (--d = start delay, --n = character count)
-const session = [
-  { cmd: 'whoami', out: 'sysadmin from Austria', d: 0.3 },
-  { cmd: 'uptime', out: 'up 10 years, held together by ansible', d: 1.5 },
-];
-const promptDelay = 2.9;
+import { getPosts } from '../lib/posts';
+
+// The "boot" date behind the uptime: about ten years of keeping things running
+const UPTIME_SINCE = '2016-10-29T06:12:00';
+
+// Formats like Linux `uptime` (without the load average): "21:42:13 up 3652 days,  4:17,  1 user"
+// The same logic runs again in the browser so visitors see their own current time.
+function formatUptime(now: Date, since: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const diff = Math.max(0, now.getTime() - since.getTime());
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  const mins = Math.floor((diff % 3_600_000) / 60_000);
+  const clock = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const running = hours === 0 ? `${mins} min` : `${hours}:${pad(mins)}`;
+  return `${clock} up ${days} days,  ${running},  1 user`;
+}
+
+const [latest] = await getPosts();
+const latestDate = latest?.data.pubDate.toISOString().slice(0, 10);
+
+// Each command types out in turn; delays are worked out from the length of what came before
+const STEP = 0.07; // seconds per typed character
+const commands = ['uptime', 'tail -n1 /var/log/blog'];
+let t = 0.3;
+const session = commands.map((cmd) => {
+  const d = t;
+  const outDelay = d + cmd.length * STEP + 0.15;
+  t = outDelay + 0.65;
+  return { cmd, d, outDelay };
+});
+const promptDelay = t + 0.15;
 ---
 
 <div class="term" role="banner">
   <div class="bar" aria-hidden="true">
     <span class="dots"><i></i><i></i><i></i></span>
-    <span class="title mono">blue-team@diaries: ~</span>
+    <span class="title mono">sysadmin@austria: ~</span>
   </div>
   <div class="screen mono">
     {session.map((s) => (
@@ -18,12 +44,38 @@ const promptDelay = 2.9;
         <p class="line" style={`--d: ${s.d}s`}>
           <span class="ps">$</span> <span class="typed" style={`--n: ${s.cmd.length}; --d: ${s.d}s`}>{s.cmd}</span>
         </p>
-        {s.out && <p class="out" style={`--d: ${s.d + s.cmd.length * 0.07 + 0.15}s`}>{s.out}</p>}
+        {s.cmd === 'uptime' && (
+          <p class="out pre" style={`--d: ${s.outDelay}s`} data-uptime-since={UPTIME_SINCE}>
+            {formatUptime(new Date(), new Date(UPTIME_SINCE))}
+          </p>
+        )}
+        {s.cmd.startsWith('tail') && latest && (
+          <p class="out" style={`--d: ${s.outDelay}s`}>
+            [{latestDate}] {latest.data.title}
+          </p>
+        )}
       </>
     ))}
     <p class="line idle" style={`--d: ${promptDelay}s`}><span class="ps">$</span> <span class="cursor" aria-hidden="true"></span></p>
   </div>
 </div>
+
+<script>
+  // Show the visitor's own clock; the page itself is built once, ahead of time
+  const el = document.querySelector<HTMLElement>('[data-uptime-since]');
+  if (el?.dataset.uptimeSince) {
+    const since = new Date(el.dataset.uptimeSince);
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const diff = Math.max(0, now.getTime() - since.getTime());
+    const days = Math.floor(diff / 86_400_000);
+    const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+    const mins = Math.floor((diff % 3_600_000) / 60_000);
+    const clock = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const running = hours === 0 ? `${mins} min` : `${hours}:${pad(mins)}`;
+    el.textContent = `${clock} up ${days} days,  ${running},  1 user`;
+  }
+</script>
 
 <style>
   .term {
@@ -52,6 +104,7 @@ const promptDelay = 2.9;
   .ps { color: var(--accent); user-select: none; }
   .line { color: var(--text); font-weight: 600; }
   .out { color: var(--muted); margin-bottom: 0.6rem !important; }
+  .out.pre { white-space: pre-wrap; }
 
   .typed { display: inline-block; vertical-align: bottom; overflow: hidden; white-space: nowrap; width: calc(var(--n) * 1ch); }
   .cursor { display: inline-block; width: 0.55ch; height: 1.1em; vertical-align: text-bottom; background: var(--accent); animation: blink 1s steps(1) infinite; }
