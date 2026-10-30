@@ -7,4 +7,5 @@ export const AUTHOR = 'CrossfireAUT';
 export const NAV = [
   { href: '/blog', label: 'Posts' },
   { href: '/about', label: 'About' },
+  { href: '/rss.xml', label: 'RSS' },
 ];
