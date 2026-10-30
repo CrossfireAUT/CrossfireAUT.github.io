@@ -23,6 +23,7 @@ For a defender this is more than a question about privacy: data flows you don't 
   - **Anthropic** models are **excluded from the EU Data Boundary**. In the EU, EFTA and UK they are off by default and need an admin opt-in.
 - **In my experience, many tenants have both settings on without the admins knowing.** (Anecdotal, see below.)
 - **You can't prove it afterwards.** The documented Copilot audit record has no field for where a prompt was processed, and none that says whether Flex Routing was used. You can only show your settings, not the route of an individual prompt.
+- **What you *can* log:** when a Copilot setting was changed, and which users used Anthropic models. Queries are [below](#what-you-can-monitor).
 - “Inside the tenant” is a permissions concept. The model runs in Microsoft's (and, for Claude, a subprocessor's) infrastructure, not in a box that belongs to you.
 
 ## What is true about the claim
@@ -83,23 +84,118 @@ Web search sends a generated query to the Bing Search service, and agents and co
 This is the part that bothers me most. Copilot interactions are written automatically to the Purview audit log, but the documented record describes *who*, *when*, *which app*, *which files were accessed* and *which plugins were used*. What it does not describe is the processing location.
 
 - `ClientRegion` is the **user's** region when they performed the action, not where the model ran. It is easy to misread as evidence of EU processing.
-- `ModelTransparencyDetails` carries the **model provider**. Microsoft's page says Copilot audit logs include provider and, in some cases, model name, and gives Anthropic as an example. It also says that when a user leaves the model on *Auto*, provider and model may be missing for some requests.
+- `ModelTransparencyDetails` describes the **model**, not the location. It holds `ModelProviderName`, `ModelName` and `ModelVersion`. Microsoft's audit page is not consistent about what gets filled in: its field table says every Microsoft 365 Copilot scenario includes `ModelProviderName` but `ModelName` is *“not available in Microsoft 365 Copilot scenarios”*, while a later section of the same page says Copilot Chat logs include provider **and** model name, with an Anthropic model as the example. The same page also says that when a user leaves the model on *Auto*, provider and model may be missing for some requests. So treat the provider as the field to rely on, the model name as a bonus, and an empty value as “unknown”, not as “Microsoft”.
 - I found **no documented field** that records the datacenter, region or country that handled a request, or that marks a request as Flex-routed.
-- Admin changes to Copilot settings are audited as admin activities, so you can at least build a timeline of *when* a setting was changed.
 
 From a blue-team view, this is a visibility gap: if you can't log it, you can't detect or verify it.
 
 So the honest position is a **configuration argument**, not a **log-based one**. If Flex Routing is off and Anthropic is off, the documentation supports saying inference stays inside the EU Data Boundary. If either one is on, there is no per-request evidence you can pull out later to show that a particular prompt stayed in the EU. That is a limitation of the evidence, and it applies regardless of what happened to any single prompt.
 
-## In practice: often on, and nobody knows
+## What you can monitor
 
-Everything above comes from documentation. This part is **my own experience**, so treat it as an observation and not a measurement: **in many tenants I have looked at, both Flex Routing and Anthropic were enabled, and the admins were not aware of it.** I have no statistics, and your tenant may be different. That is exactly why you should look.
+The location gap stays, but two things are logged and worth watching: **setting changes** and **which model provider was used**.
 
-**I have seen tenants created in 2019 with Flex Routing and Anthropic as a subprocessor switched on.** I don't know how those settings got there, whether through a default, a rollout or a change nobody remembers, and I'm not suggesting anyone did anything wrong. I'm only describing what the settings showed when I looked.
+### Alert on Copilot setting changes
 
-Why would that happen when the documentation says Anthropic is off by default in the EU, EFTA and UK? I can only offer hypotheses, not documented causes:
+Microsoft's list of audited activities has one operation for this: **Updated a Copilot setting**, operation `UpdateTenantSettings` (*“An admin (or system on behalf of an admin) updated a Copilot setting.”*). It is a generic event. The documentation doesn't say which settings write it or how the record names the setting that changed, so alert on all of them and read the record's details. They are rare, so the noise is low.
 
-- **Flex Routing:** it is on by default for eligible tenants created after 25 March 2026, and the documentation only “encourages” older tenants to check. A setting that was never actively chosen is easy to leave as it is. What I've seen suggests older tenants can have it on too, but the documentation doesn't say how.
+In the Purview portal: **Audit** → search → *Activities – operation names* → `UpdateTenantSettings`.
+
+Or as a script, with the audit search API in Microsoft Graph. It needs the Microsoft Graph PowerShell SDK and the `AuditLogsQuery.Read.All` permission. The search runs on Microsoft's side and can take a few minutes, so the helper below starts it, waits and then collects the results:
+
+```powershell
+Connect-MgGraph -Scopes 'AuditLogsQuery.Read.All'
+
+# Starts an audit search, waits until it has finished and returns all records
+function Invoke-AuditSearch([hashtable]$Filter, [int]$Days = 90) {
+  $body = $Filter + @{
+    filterStartDateTime = (Get-Date).ToUniversalTime().AddDays(-$Days).ToString('o')
+    filterEndDateTime   = (Get-Date).ToUniversalTime().ToString('o')
+  }
+  $query = Invoke-MgGraphRequest -Method POST -Uri 'v1.0/security/auditLog/queries' `
+    -Body ($body | ConvertTo-Json) -ContentType 'application/json'
+  do {
+    Start-Sleep -Seconds 30
+    $query = Invoke-MgGraphRequest -Uri "v1.0/security/auditLog/queries/$($query.id)"
+  } while ($query.status -in 'notStarted', 'running')
+  if ($query.status -ne 'succeeded') { throw "Audit search ended with status '$($query.status)'" }
+  if ($query.isRecordCountLimitExceeded) { Write-Warning 'Record limit reached, results are incomplete. Use a shorter time range.' }
+
+  $uri = "v1.0/security/auditLog/queries/$($query.id)/records"
+  while ($uri) {
+    $page = Invoke-MgGraphRequest -Uri $uri
+    $page.value | ForEach-Object { [pscustomobject]$_ }
+    $uri = $page.'@odata.nextLink'
+  }
+}
+
+Invoke-AuditSearch -Filter @{
+  displayName      = 'Copilot setting changes'
+  operationFilters = @('UpdateTenantSettings')
+} | Select-Object createdDateTime, userPrincipalName, operation,
+    @{ n = 'details'; e = { $_.auditData | ConvertTo-Json -Depth 10 -Compress } }
+```
+
+Because it is Graph, this also works with an app registration instead of a signed-in admin, which is what you want for scheduled checks or many tenants.
+
+If you ingest Copilot audit data into Microsoft Sentinel, it lands in the `CopilotActivity` table, where the table reference gives `UpdateCopilotSettings` as an example record type:
+
+```kql
+CopilotActivity
+| where RecordType == "UpdateCopilotSettings"
+| project TimeGenerated, ActorName, ActorUserType, SrcIpAddr, LLMEventData
+```
+
+Turn that into an analytics rule and every change to Copilot settings becomes an incident someone has to look at. That is the closest thing to “nobody flips the switch unnoticed” you can get today.
+
+Two limits: Audit (Standard) keeps records for 180 days by default, so a setting changed before that leaves no trail. And I have not found documentation confirming that the Flex Routing toggle specifically writes this event. Test it once by changing the setting and checking for the record.
+
+### Find out who used Anthropic models
+
+Each `CopilotInteraction` record carries `CopilotEventData.ModelTransparencyDetails`. Filtering on the provider tells you **who** used **which provider**, and when:
+
+```powershell
+Invoke-AuditSearch -Days 30 -Filter @{
+  displayName      = 'Copilot interactions with Anthropic'
+  operationFilters = @('CopilotInteraction')
+  keywordFilter    = 'Anthropic'
+} |
+  Where-Object {
+    @($_.auditData.CopilotEventData.ModelTransparencyDetails |
+      ForEach-Object { $_.ModelProviderName }) -contains 'Anthropic'
+  } |
+  Group-Object userPrincipalName | Sort-Object Count -Descending |
+  Select-Object Count, Name
+```
+
+The `keywordFilter` lets Microsoft's side do the rough filtering: it matches “Anthropic” anywhere in the record details. That would also catch a file called *Anthropic.docx*, so the `Where-Object` step keeps only records where Anthropic is the model provider.
+
+In Sentinel, without depending on how the nested fields are laid out:
+
+```kql
+CopilotActivity
+| where TimeGenerated > ago(30d)
+| where RecordType == "CopilotInteraction"
+| where tostring(LLMEventData) has "Anthropic"
+| summarize Interactions = count(), LastSeen = max(TimeGenerated) by ActorName
+| order by Interactions desc
+```
+
+Read the result as a **lower bound**. Requests on *Auto* may have no provider recorded, so “no Anthropic hits” does not prove that no Anthropic model was used. A hit, on the other hand, is solid evidence that data went to a model Microsoft documents as excluded from the EU Data Boundary. If your settings say Anthropic is off, it is also evidence that the settings are not what you think.
+
+### Checking many tenants
+
+If you manage many tenants, you'll want to read these settings with a script. As far as I can find, **you can't.** The Copilot admin settings in Microsoft Graph currently expose only one setting (`limitedMode`, for Teams meetings), and I found no documented Graph endpoint or PowerShell cmdlet for Flex Routing or the AI provider settings. Both Microsoft Learn pages describe only the admin center.
+
+So for these two settings, checking means opening the admin center tenant by tenant. That supports the point of this post: a setting you can't read at scale won't be reviewed at scale. The audit log is the part you *can* automate across tenants, so start there.
+
+## In practice: often on! ...and nobody knows
+
+Everything above comes from documentation. This part is **my own experience**, so treat it as an observation and not a measurement: **in many tenants I have looked at, both Flex Routing and Anthropic were enabled, and the admins were not aware of it.** Your tenant may be different. That is exactly why you should look.
+
+Why would that happen when the documentation says Anthropic is off by default in the EU, EFTA and UK? These are guesses, not documented causes:
+
+- **Flex Routing:** it is on by default for eligible tenants created after 25 March 2026, and the documentation only “encourages” older tenants to check. A setting that was never actively chosen is easy to leave as it is.
 - **Anthropic:** an admin may have switched it on to try a feature and never revisited it, or enabled it for a group of testers, or the tenant may not be classed as EU, EFTA or UK for this setting.
 - **Nobody owns it:** these settings sit in a new *Copilot → Settings* area, outside the places admins usually review, so they can go unnoticed.
 
@@ -125,6 +221,8 @@ I'd rather be clear about the gaps than guess:
 - The pages I read do not say **where Anthropic processes** the data for Copilot, only that it is outside the EU Data Boundary.
 - How often **peak periods** happen is not stated.
 - Whether any log, report or API shows **which region processed a specific request**. The audit schema I read doesn't list one. If you know of one, I'd like to hear about it.
+- Whether the Flex Routing and AI provider settings can be **read through an API**. I found none.
+- **Which settings** write the `UpdateTenantSettings` audit event, and how the record names them.
 - The privacy page's EU Data Boundary section does not mention Flex Routing in the part I read. The Flex Routing page is the one that qualifies it, so read the two together.
 
 If your decision depends on these points, put the question to your Microsoft account team in writing.
@@ -137,8 +235,9 @@ If your decision depends on these points, put the question to your Microsoft acc
 4. Check the **Power Platform admin center** settings for Copilot Studio and agents.
 5. Make sure nobody has enabled **Anthropic models with Data Retention** without a decision on record.
 6. Update your **DPIA and records of processing** to describe inference location and the subprocessor accurately.
-7. Record **when** you set Flex Routing and the Anthropic settings, and keep the change history. The audit log of admin activities gives you a timeline, since per-request routing evidence isn't documented.
-8. Review again on a schedule, because the defaults and the documentation both move.
+7. Record **when** you set Flex Routing and the Anthropic settings, and keep the change history. Per-request routing evidence isn't documented, so this timeline is what you have.
+8. **Alert** on `UpdateTenantSettings` / `UpdateCopilotSettings`, and run the Anthropic usage query regularly, especially if your settings say Anthropic is off.
+9. Review again on a schedule, because the defaults and the documentation both move.
 
 ## Closing thought
 
@@ -156,3 +255,8 @@ Grab a coffee, open the admin center and check your settings. If you're not the 
 - [Flex routing (EU and EFTA)](https://learn.microsoft.com/en-us/microsoft-365/copilot/copilot-flex-routing) (Microsoft Learn)
 - [Anthropic models in Microsoft Online Services](https://learn.microsoft.com/en-us/microsoft-365/copilot/connect-to-ai-subprocessor) (Microsoft Learn)
 - [Audit logs for Copilot and AI applications](https://learn.microsoft.com/en-us/purview/audit-copilot) (Microsoft Learn, Purview)
+- [Audit log activities: Microsoft 365 Copilot admin activities](https://learn.microsoft.com/en-us/purview/audit-log-activities#microsoft-365-copilot-admin-activities) (Microsoft Learn, Purview)
+- [Create auditLogQuery](https://learn.microsoft.com/en-us/graph/api/security-auditcoreroot-post-auditlogqueries?view=graph-rest-1.0) (Microsoft Graph, audit search API)
+- [CopilotInteraction audit schema](https://learn.microsoft.com/en-us/office/office-365-management-api/copilot-schema) (Office 365 Management API)
+- [CopilotActivity table reference](https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/copilotactivity) (Azure Monitor / Microsoft Sentinel)
+- [copilotAdminSetting resource type](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/resources/copilotadminsetting) (Microsoft Graph)
