@@ -26,4 +26,4 @@ draft: true         # hidden from production builds
 ---
 ```
 
-> Drafts show up in `npm run dev` with a badge, but are excluded from production builds and the sitemap.
+> Drafts show up in `npm run dev` with a badge, but are excluded from production builds.
