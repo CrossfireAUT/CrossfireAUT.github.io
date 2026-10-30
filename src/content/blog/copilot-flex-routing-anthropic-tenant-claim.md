@@ -1,7 +1,7 @@
 ---
 title: 'Copilot, Flex Routing and Anthropic: Is your data really “inside the tenant”?'
 description: 'A source-by-source look at what Microsoft documents about where Copilot processes EU data, and why “it stays in our tenant” is too simple.'
-pubDate: 2026-10-30
+pubDate: 2026-10-23
 cover: '../../assets/covers/copilot-flow-v3.svg'
 coverAlt: 'Prompts, connected services such as SharePoint, and memes feed into Copilot inside a dashed tenant boundary, with lines leading out to Flex Routing and Anthropic'
 tags: ['copilot', 'microsoft-365', 'privacy', 'compliance']
