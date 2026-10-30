@@ -5,12 +5,13 @@ pubDate: 2026-10-30
 cover: '../../assets/covers/copilot-flow-v3.svg'
 coverAlt: 'Prompts, connected services such as SharePoint, and memes feed into Copilot inside a dashed tenant boundary, with lines leading out to Flex Routing and Anthropic'
 tags: ['copilot', 'microsoft-365', 'privacy', 'compliance']
-draft: true
 ---
 
 A sentence I keep hearing when Microsoft 365 Copilot comes up: *“We use Copilot because our data stays inside our tenant.”*
 
 It's a reasonable thing to believe, and parts of it are true. But as a blanket statement it is not what Microsoft's documentation says, and two features make the gap concrete: **Flex Routing** and **Anthropic as a subprocessor**. This post goes through what is documented, what isn't, and what an admin should check.
+
+For a defender this is more than a question about privacy: data flows you don't know about are attack surface you don't manage, and settings nobody chose are configuration drift.
 
 > This post is a **snapshot as of 30 October 2026**, checked against Microsoft Learn on that date. **I will not be updating it.** Microsoft's pages are reviewed on a 180-day cycle and defaults change, so check the linked pages and your own tenant before you rely on anything here. This is a technical reading, not legal advice.
 
@@ -85,6 +86,8 @@ This is the part that bothers me most. Copilot interactions are written automati
 - `ModelTransparencyDetails` carries the **model provider**. Microsoft's page says Copilot audit logs include provider and, in some cases, model name, and gives Anthropic as an example. It also says that when a user leaves the model on *Auto*, provider and model may be missing for some requests.
 - I found **no documented field** that records the datacenter, region or country that handled a request, or that marks a request as Flex-routed.
 - Admin changes to Copilot settings are audited as admin activities, so you can at least build a timeline of *when* a setting was changed.
+
+From a blue-team view, this is a visibility gap: if you can't log it, you can't detect or verify it.
 
 So the honest position is a **configuration argument**, not a **log-based one**. If Flex Routing is off and Anthropic is off, the documentation supports saying inference stays inside the EU Data Boundary. If either one is on, there is no per-request evidence you can pull out later to show that a particular prompt stayed in the EU. That is a limitation of the evidence, and it applies regardless of what happened to any single prompt.
 
