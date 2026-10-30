@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // TODO: replace with your real domain (needed for sitemap, RSS and canonical URLs)
-  site: 'https://example.com',
+  site: 'https://crossfireaut.github.io',
   integrations: [sitemap()],
   markdown: {
     shikiConfig: {
