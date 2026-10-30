@@ -1,0 +1,18 @@
+---
+import { SITE_TITLE, AUTHOR } from '../consts';
+---
+
+<footer>
+  <div class="container">
+    <p>© {new Date().getFullYear()} {AUTHOR} · {SITE_TITLE}</p>
+    <p class="mono"><a href="/sitemap-index.xml">sitemap</a></p>
+  </div>
+</footer>
+
+<style>
+  footer { border-top: 1px solid var(--border); margin-top: 4rem; padding: 2rem 0; color: var(--muted); font-size: 0.9rem; }
+  .container { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  p { margin: 0; }
+  a { color: var(--muted); }
+  a:hover { color: var(--accent); }
+</style>

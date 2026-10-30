@@ -1,0 +1,39 @@
+---
+import { SITE_TITLE, SITE_TAGLINE, NAV } from '../consts';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href + '/');
+---
+
+<header>
+  <div class="container bar">
+    <div class="left">
+      <a href="/" class="brand mono"><span class="prompt">&gt;_</span> {SITE_TITLE}</a>
+      <span class="tagline">{SITE_TAGLINE}</span>
+    </div>
+    <nav aria-label="Main">
+      {NAV.map((item) => (
+        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<style>
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.75rem; flex-wrap: wrap; }
+  .brand { font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
+  .prompt { color: var(--accent); }
+  .left { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+  .tagline { color: var(--muted); font-size: 0.85rem; padding-left: 1rem; border-left: 1px solid var(--border); }
+  @media (max-width: 860px) { .tagline { display: none; } }
+  nav { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+  nav a:hover, nav a[aria-current='page'] { color: var(--text); }
+  nav a[aria-current='page'] { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 6px; text-decoration-thickness: 2px; }
+</style>

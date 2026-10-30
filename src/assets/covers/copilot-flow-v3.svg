@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="ui-monospace, 'Cascadia Code', Consolas, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05070b"/><stop offset="1" stop-color="#0b1d3a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity=".38"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#3b82f6" stroke-opacity=".10"/>
+    </pattern>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f1d38"/><stop offset="1" stop-color="#0a1326"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13264a"/><stop offset="1" stop-color="#0a1428"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10 3 5z" fill="#7cb4ff"/>
+    </marker>
+    <marker id="arrowOut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10 3 5z" fill="#93c5fd"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <ellipse cx="600" cy="315" rx="520" ry="260" fill="url(#glow)"/>
+
+  <!-- Grid: 48px outer margin, 40px padding inside the boundary, rows at y 196 / 316 / 436 -->
+
+  <!-- "tenant" boundary -->
+  <rect x="48" y="96" width="680" height="438" rx="26" fill="#060a11" fill-opacity=".72" stroke="#60a5fa" stroke-opacity=".8" stroke-width="2.5" stroke-dasharray="12 9"/>
+  <rect x="72" y="81" width="268" height="30" rx="15" fill="#0b1426" stroke="#2a4a7f"/>
+  <text x="206" y="101" fill="#9db4d3" font-size="15" letter-spacing="2.2" text-anchor="middle">“INSIDE THE TENANT”</text>
+
+  <!-- input cards -->
+  <g fill="url(#card)" stroke="#2f5da8" stroke-width="1.5">
+    <rect x="88" y="148" width="330" height="96" rx="16"/>
+    <rect x="88" y="268" width="330" height="96" rx="16"/>
+    <rect x="88" y="388" width="330" height="96" rx="16"/>
+  </g>
+
+  <!-- icon badges -->
+  <g fill="#0d1b33" stroke="#2f5da8" stroke-width="1.5">
+    <circle cx="132" cy="196" r="24"/><circle cx="132" cy="316" r="24"/><circle cx="132" cy="436" r="24"/>
+  </g>
+  <g fill="none" stroke="#7cb4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- prompt: chevron + cursor -->
+    <g transform="translate(120 184)"><path d="M5 7l5 5-5 5"/><path d="M13 18h6"/></g>
+    <!-- connected services: layers -->
+    <g transform="translate(120 304)"><path d="m12 2-10 5 10 5 10-5z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></g>
+    <!-- memes: image -->
+    <g transform="translate(120 424)"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></g>
+  </g>
+
+  <g fill="#eef4ff" font-size="21" font-weight="700">
+    <text x="172" y="190">Prompts</text>
+    <text x="172" y="310">Connected Services</text>
+    <text x="172" y="444">Memes</text>
+  </g>
+  <g fill="#8ea3c2" font-size="14">
+    <text x="172" y="216">user input</text>
+    <text x="172" y="336">SharePoint, Mails, Teams …</text>
+  </g>
+
+  <!-- inputs -> Copilot (one arrow per row) -->
+  <g stroke="#7cb4ff" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M422 196 H474" marker-end="url(#arrow)"/>
+    <path d="M422 316 H474" marker-end="url(#arrow)"/>
+    <path d="M422 436 H474" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Copilot panel -->
+  <g filter="url(#soft)">
+    <rect x="480" y="148" width="208" height="336" rx="30" fill="url(#panel)" stroke="url(#edge)" stroke-width="3.5"/>
+  </g>
+  <g transform="translate(566 266) scale(1.5)" fill="#7cb4ff">
+    <path d="M12 2l2.1 6.1L20 10l-5.9 1.9L12 18l-2.1-6.1L4 10l5.9-1.9z"/>
+  </g>
+  <text x="584" y="362" fill="#93c5fd" font-size="34" font-weight="700" text-anchor="middle">Copilot</text>
+
+  <!-- Copilot -> outside the boundary -->
+  <g stroke="#93c5fd" stroke-width="3" stroke-linecap="round" fill="none" stroke-dasharray="2 8">
+    <path d="M692 262 C770 262 772 196 824 196" marker-end="url(#arrowOut)"/>
+    <path d="M692 370 C770 370 772 436 824 436" marker-end="url(#arrowOut)"/>
+  </g>
+
+  <!-- outside targets, aligned with the first and last input rows -->
+  <g fill="url(#card)" stroke="#3b82f6" stroke-width="2">
+    <rect x="832" y="136" width="320" height="120" rx="16"/>
+    <rect x="832" y="376" width="320" height="120" rx="16"/>
+  </g>
+  <g fill="#eef4ff" font-size="24" font-weight="700">
+    <text x="860" y="180">Flex Routing</text>
+    <text x="860" y="420">Anthropic</text>
+  </g>
+  <g fill="#8ea3c2" font-size="15">
+    <text x="860" y="208">US · CA · AU</text>
+    <text x="860" y="231">during peak load</text>
+    <text x="860" y="448">subprocessor</text>
+    <text x="860" y="471">excluded from EU Data Boundary</text>
+  </g>
+</svg>

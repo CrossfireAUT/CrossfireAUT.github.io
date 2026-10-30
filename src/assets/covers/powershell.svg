@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="ui-monospace, Consolas, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05070b"/><stop offset="1" stop-color="#0b1d3a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity=".4"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#3b82f6" stroke-opacity=".12"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <circle cx="600" cy="315" r="360" fill="url(#glow)"/>
+  <rect x="190" y="130" width="820" height="370" rx="18" fill="#070b12" stroke="#3b82f6" stroke-opacity=".6" stroke-width="2"/>
+  <path d="M190 148a18 18 0 0 1 18-18h784a18 18 0 0 1 18 18V190H190Z" fill="#0d1626"/>
+  <line x1="190" y1="190" x2="1010" y2="190" stroke="#1d3358"/>
+  <circle cx="226" cy="160" r="8" fill="#3b82f6" fill-opacity=".9"/><circle cx="254" cy="160" r="8" fill="#3b82f6" fill-opacity=".5"/><circle cx="282" cy="160" r="8" fill="#3b82f6" fill-opacity=".25"/>
+  <text x="330" y="167" fill="#8a97ab" font-size="18">Event ID 4104 · ScriptBlock</text>
+  <g font-size="26">
+    <text x="230" y="250" fill="#60a5fa">PS&gt;</text><text x="300" y="250" fill="#e6edf7">Get-WinEvent -Id 4104</text>
+    <text x="230" y="300" fill="#8a97ab">... -enc JABzAD0ATgBlAHcALQBP</text>
+    <text x="230" y="350" fill="#8a97ab">... FromBase64String(</text><text x="640" y="350" fill="#3b82f6">⚠ suspicious</text>
+    <text x="230" y="400" fill="#8a97ab">... IEX (DownloadString(</text><text x="700" y="400" fill="#3b82f6">⚠ suspicious</text>
+    <text x="230" y="450" fill="#60a5fa">PS&gt;</text><rect x="300" y="430" width="14" height="28" fill="#60a5fa"/>
+  </g>
+</svg>

@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import TerminalBanner from '../components/TerminalBanner.astro';
+import { SITE_TITLE, SITE_TAGLINE } from '../consts';
+import { getPosts } from '../lib/posts';
+
+const posts = await getPosts();
+const latest = posts.slice(0, 6);
+---
+
+<BaseLayout>
+  <section class="hero container">
+    <h1 class="sr-only">{SITE_TITLE}: {SITE_TAGLINE}</h1>
+    <TerminalBanner />
+  </section>
+
+  <section class="container">
+    <div class="section-head">
+      <h2>Latest</h2>
+      <a href="/blog" class="mono">all posts →</a>
+    </div>
+    <div class="grid">
+      {latest.map((post) => <PostCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { padding-block: 3rem 3rem; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+  .section-head h2 { margin: 0; font-size: 1.4rem; }
+  .grid { display: grid; gap: 1rem; align-items: start; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+</style>

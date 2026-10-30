@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_TITLE, AUTHOR } from '../consts';
+---
+
+<BaseLayout title="About" description={`About ${SITE_TITLE} and ${AUTHOR}.`}>
+  <div class="container wrap prose">
+    <h1>About</h1>
+    <p>
+      Hi, I'm {AUTHOR}, a sysadmin from Austria who spends the day keeping servers, networks and users running. {SITE_TITLE}
+      is where I write down the security side of that job: hardening, monitoring, patching, and what I learn
+      from incidents.
+    </p>
+    <p>
+      Replace this text with your own background and how to reach you (GitHub, Mastodon, email, PGP key).
+    </p>
+    <h2>Scope</h2>
+    <p>
+      Everything here is practical and defensive. Anything offensive is shown only against systems I own
+      or am authorized to test.
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .wrap { padding-block: 3rem 0; }
+</style>

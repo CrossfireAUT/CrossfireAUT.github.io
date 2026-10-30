@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPosts } from '../../lib/posts';
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="Posts" description="All posts.">
+  <div class="container wrap">
+    <h1>Posts</h1>
+    <div class="list">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .wrap { padding-block: 3rem 0; max-width: 52rem; }
+  h1 { margin: 0 0 1.5rem; }
+  .list { display: grid; gap: 1rem; }
+</style>

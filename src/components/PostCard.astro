@@ -1,0 +1,56 @@
+---
+import { Image } from 'astro:assets';
+import type { Post } from '../lib/posts';
+import { readingTime } from '../lib/posts';
+
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+const { title, description, pubDate, tags, severity, cve, draft, cover, coverAlt } = post.data;
+const minutes = readingTime(post.body ?? '');
+---
+
+<article class="card">
+  {cover && (
+    <a href={`/blog/${post.id}`} class="cover" tabindex="-1" aria-hidden="true">
+      <Image src={cover} alt={coverAlt} widths={[400, 800]} sizes="(min-width: 768px) 24rem, 100vw" />
+    </a>
+  )}
+  <div class="body">
+    <div class="meta mono">
+      <time datetime={pubDate.toISOString()}>
+        {pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+      </time>
+      <span>· {minutes} min read</span>
+      {draft && <span class="badge low">draft</span>}
+      {severity && <span class={`badge ${severity}`}>{severity}</span>}
+      {cve && <span>{cve}</span>}
+    </div>
+    <h2><a href={`/blog/${post.id}`}>{title}</a></h2>
+    <p>{description}</p>
+    {tags.length > 0 && (
+      <div class="tags">
+        {tags.map((t) => <span class="tag">#{t}</span>)}
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .cover { display: block; border-bottom: 1px solid var(--border); }
+  .cover :global(img) { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: cover; }
+  .body { padding: 1.25rem 1.4rem; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--muted); }
+  h2 { margin: 0.6rem 0 0.4rem; font-size: 1.3rem; }
+  h2 a { color: var(--text); text-decoration: none; }
+  h2 a:hover { color: var(--accent); }
+  p { margin: 0 0 1rem; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+</style>
