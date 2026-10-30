@@ -1,5 +1,5 @@
 ---
-title: 'Copilot, Flex Routing and Anthropic: Is your data really “Inside the Tenant”?'
+title: 'Copilot, Flex Routing and Anthropic: Is your data really “inside the tenant”?'
 description: 'A source-by-source look at what Microsoft documents about where Copilot processes EU data, and why “it stays in our tenant” is too simple.'
 pubDate: 2026-10-30
 cover: '../../assets/covers/copilot-flow-v3.svg'
