@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  // TODO: replace with your real domain (needed for sitemap, RSS and canonical URLs)
+  // Public URL of the site (used for the sitemap and canonical URLs)
   site: 'https://crossfireaut.github.io',
   integrations: [sitemap()],
   markdown: {
